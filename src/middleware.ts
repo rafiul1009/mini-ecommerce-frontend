@@ -1,45 +1,29 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Get the pathname
-  const path = request.nextUrl.pathname
+  const path = request.nextUrl.pathname;
 
-  // Define public paths that don't require authentication
-  const isPublicPath = path === '/login' || path === '/register' || path === '/'
+  const isPublicPath = path === '/login' || path === '/register' || path === '/';
 
-  // Get the token from the cookies with proper parsing
-  const cookieHeader = request.headers.get('cookie')
-  let token = ''
-  
-  if (cookieHeader) {
-    const cookies = cookieHeader.split(';').reduce((acc: { [key: string]: string }, cookie: string) => {
-      const [key, value] = cookie.trim().split('=')
-      acc[key] = value
-      return acc
-    }, {})
-    token = cookies['token'] || ''
-  }
+  const token = request.cookies.get('token')?.value || '';
 
-  // Add debug logging for production
-  console.log(`Path: ${path}, IsPublicPath: ${isPublicPath}, HasToken: ${Boolean(token)}`)
+  console.log(`Path: ${path}, IsPublicPath: ${isPublicPath}, HasToken: ${Boolean(token)}`);
+  console.log("Request Cookie Header:", request.headers.get('cookie'));
 
-  // Redirect to login if accessing a protected route without token
   if (!isPublicPath && !token) {
     console.log('Redirecting to login: No token found')
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Redirect to Home if accessing auth pages with token
   if (isPublicPath && path !== '/' && token) {
     console.log('Redirecting to Home: Token exists')
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-// Configure the paths that trigger the middleware
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next|favicon.ico).*)'],
 };
